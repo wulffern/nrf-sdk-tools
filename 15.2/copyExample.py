@@ -13,7 +13,7 @@ import re
 
 def copyPath(fromPath,toPath):
     if(os.path.exists(toPath)):
-        print(f"Error: path {toPath} already exists.")
+        raise Exception(f"Error: path {toPath} already exists.")
     else:  
         shutil.copytree(fromPath,toPath)
 
@@ -27,38 +27,76 @@ def removeOtherThanSegger(path):
         if(os.path.exists(d)):
             shutil.rmtree(d) 
 
-def modifySeggerProject(filename):
+def getRemoteOrLocalPath(currentSeggerFileLocation,originalSeggerFileLocation,path):
+    #- Try local first
+    newPath = ""
+    localPath = os.path.normpath(currentSeggerFileLocation + "/" + path)
+    remotePath = os.path.abspath(originalSeggerFileLocation + "/" + path)
+       
+    if(os.path.exists(localPath)):
+        newPath = path
+    elif(os.path.exists(remotePath)):   
+        newPath = remotePath
+    return newPath
+
+
+def modifySeggerProject(projectPath,copiedPath,filename):
     if(not os.path.exists(filename)):
         raise Exception(f"Could not find {filename}")
     shutil.copy(filename,f"{filename}.bak")
-    print(filename)
+    originalSeggerFileLocation = os.path.dirname(os.path.abspath(projectPath + str(filename).replace(copiedPath,"")))
+    currentSeggerFileLocation = os.path.dirname(filename)
     buffer = ""
     with open(filename,"r") as f:
         for line in f:
-            #print(line)
-            m = re.search(r"c_user_include_directories=\"(.*);\"",line)
+            
+            #- Replace include directories
+            includeDirRegex = r"c_user_include_directories=\"(.*);\""
+            m = re.search(includeDirRegex,line)
             if(m):
-                includes = str(m.groups(1))
+                includes = str(m.group(1))
                 dirs = includes.split(";")
+                paths = ""
                 for d in dirs:
-                    print(d)
-                #for i in range(1,len(m):
-                #print(m)
-                
+                    newPath = getRemoteOrLocalPath(currentSeggerFileLocation,originalSeggerFileLocation,d)
+                    if(newPath != ""):
+                        paths += newPath + ";"
+        
+                line = re.sub(includeDirRegex,f"c_user_include_directories=\"{paths}\"",line)
+            
+            #- Replace file_names
+            fileNameRegex = r"file_name=\"(.*)\""
+            mfile = re.search(fileNameRegex,line)
+            if(mfile):
+                d = mfile.group(1)
+                newPath = getRemoteOrLocalPath(currentSeggerFileLocation,originalSeggerFileLocation,d)   
+            
+                if(newPath != ""):
+                    line = re.sub(fileNameRegex,f"file_name=\"{newPath}\"",line)
+            
 
-    #print(buffer)
+            #- Gobble up lines
+            buffer += line + "\n"
+                
+    with open(filename,"w") as f:
+        f.write(buffer)
 
         
 
-def findAndModifySeggerProject(path):
+def findAndModifySeggerProject(projectPath,path):
     sesProjects  = glob.glob(f"{path}/**/*.emProject",recursive=True)
     for f in sesProjects:
-        modifySeggerProject(f)
+        modifySeggerProject(projectPath,path,f)
 
 def main(fromPath, toPath):
-    #copyPath(fromPath,toPath)
-    #removeOtherThanSegger(toPath)
-    findAndModifySeggerProject(toPath)
+    print(f"Copying {fromPath} to {toPath}")
+    copyPath(fromPath,toPath)
+    print(f"Removing non Segger Embedded Studio Projects")
+    removeOtherThanSegger(toPath)
+    print(f"Modifying paths in Segger Embedded Studio Projects")
+    projectPath = os.path.normpath(f"{fromPath}/")
+
+    findAndModifySeggerProject(projectPath,toPath)
 
 
 
@@ -66,5 +104,4 @@ def main(fromPath, toPath):
 if(len(sys.argv) == 3):
     main(sys.argv[1],sys.argv[2])
 else:
-    print(len(sys.argv))
     print("Usage: copySeggerExample.py <fromPath> <toPath>")
