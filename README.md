@@ -17,5 +17,6 @@ Yup, even something simple like copying a example project out of the SDK can be 
 - Locates all *.emProject files, and replaces all relative references to SDK with $(SDK). It first checks whether the file is local in the example, so it does not reference the SDK main.c for example.
 
 ## Segger Embedded Studio setup
-You need to setup a global macro that points to the SDK. In Segger Embedded Studio, do Tools -> Options -> Building, find the Global Macros line, and add the macro for SDK, for example 
+You need to setup a global macro that points to the SDK. In Segger Embedded Studio, do Tools -> Options -> Building, find the Global Macros line, and add the macro for SDK, for example
+
     SDK=/Users/wulff/pro/nRF5_SDK_15.2.0
