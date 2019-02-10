@@ -1,7 +1,8 @@
 # nrf-sdk-tools
 A collection of scripts and useful things in relation to the Nordic nRF SDKs
 
-#copyExample.py
+# copyExample.py
+
 Yup, even something simple like copying a example project out of the SDK can be a giant pain. I don't agree to the sentiment that development should be done within the example SDK path, there is no way I'll do that. That's just wrong. So to never have to edit the projectfiles again I of course made a script.
 
 ## Usage
