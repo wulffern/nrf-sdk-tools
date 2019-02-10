@@ -104,4 +104,4 @@ def main(fromPath, toPath):
 if(len(sys.argv) == 3):
     main(sys.argv[1],sys.argv[2])
 else:
-    print("Usage: copySeggerExample.py <fromPath> <toPath>")
+    print("Usage: copyExample.py <fromPath> <toPath>")
