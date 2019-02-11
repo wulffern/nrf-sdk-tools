@@ -1,4 +1,4 @@
-# Copyright (c) 2019 wulff
+# Copyright (c) 2019 Carsten Wulff Software
 # 
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
@@ -13,8 +13,6 @@ import glob
 import re
 
 
-
-
 def copyPath(fromPath,toPath):
     if(os.path.exists(toPath)):
         raise Exception(f"Error: path {toPath} already exists.")
@@ -22,21 +20,18 @@ def copyPath(fromPath,toPath):
         shutil.copytree(fromPath,toPath)
 
 def removeOtherThanSegger(path):
-    #subdirs = [os.path.join(d, o) for o in os.listdir(d) if os.path.isdir(os.path.join(d,o))]
-    
     dirList  = glob.glob(f"{path}{os.path.sep}**{os.path.sep}",recursive=True)
-    
     dirsToDelete = [folder for folder in dirList if re.search(r"arm|iar|Output",folder)]
     for d in dirsToDelete:
         if(os.path.exists(d)):
             shutil.rmtree(d) 
 
 def getRemoteOrLocalPath(sdkPath,currentSeggerFileLocation,originalSeggerFileLocation,path):
-    #- Try local first
     newPath = ""
     localPath = os.path.normpath(currentSeggerFileLocation + os.path.sep + path)
     remotePath = os.path.abspath(originalSeggerFileLocation + os.path.sep+ path)
-       
+   
+    #- Try local first       
     if(os.path.exists(localPath)):
         newPath = path
     elif(os.path.exists(remotePath)):   
@@ -51,6 +46,7 @@ def modifySeggerProject(sdkPath,projectPath,copiedPath,filename):
     if(not os.path.exists(filename)):
         raise Exception(f"Could not find {filename}")
     shutil.copy(filename,f"{filename}.bak")
+
     originalSeggerFileLocation = os.path.dirname(os.path.normpath(projectPath + str(filename).replace(copiedPath,"")))
     currentSeggerFileLocation = os.path.dirname(filename)
 
@@ -79,9 +75,6 @@ def modifySeggerProject(sdkPath,projectPath,copiedPath,filename):
                 newPath = getRemoteOrLocalPath(sdkPath,currentSeggerFileLocation,originalSeggerFileLocation,mfile.group(1))   
                 if(newPath != ""):
                     line = re.sub(fileNameRegex,f"\"{newPath}\"",line)
-            
-
-        
             buffer += line + "\n"
                 
     with open(filename,"w") as f:
@@ -97,8 +90,10 @@ def findAndModifySeggerProject(sdkPath,projectPath,path):
 def main(sdkPath,fromPath, toPath):
     print(f"Copying {fromPath} to {toPath}")
     copyPath(fromPath,toPath)
+
     print(f"Removing non Segger Embedded Studio Projects")
     removeOtherThanSegger(toPath)
+    
     print(f"Modifying paths in Segger Embedded Studio Projects")
     projectPath = os.path.normpath(f"{fromPath}{os.path.sep}")
 
